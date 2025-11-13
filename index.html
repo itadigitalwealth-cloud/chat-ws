@@ -2,111 +2,182 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat E2EE</title>
+  <title>Anon Chat E2EE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    :root {
-      color-scheme: dark;
-    }
-    * {
-      box-sizing: border-box;
-    }
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: radial-gradient(circle at top, #1f2933 0, #020617 55%, #000 100%);
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
       color: #e5e7eb;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 16px;
+      padding: 12px;
     }
     #app {
       width: 100%;
-      max-width: 650px;
+      max-width: 900px;
     }
     .card {
       background: rgba(15, 23, 42, 0.96);
       border-radius: 18px;
-      border: 1px solid rgba(75, 85, 99, 0.7);
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
-      padding: 16px;
-      backdrop-filter: blur(12px);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      box-shadow: 0 18px 45px rgba(0,0,0,0.7);
+      padding: 14px;
+      backdrop-filter: blur(14px);
     }
-    #login {
-      margin-bottom: 16px;
-    }
-    #brand {
+    #topBar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
     }
-    #brand span.logo {
-      font-weight: 700;
-      font-size: 18px;
-      letter-spacing: 0.04em;
+    #brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
-    #brand span.badge {
+    #brand .logo {
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      font-size: 18px;
+    }
+    #brand .sub {
       font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(37, 99, 235, 0.2);
-      border: 1px solid rgba(59, 130, 246, 0.6);
-      color: #bfdbfe;
+      color: #9ca3af;
+    }
+    #profileInfo {
+      font-size: 13px;
+      color: #c4b5fd;
+    }
+    #profileInfo span.handle {
+      font-weight: 600;
+      color: #a5b4fc;
+    }
+    #layout {
+      display: grid;
+      grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 700px) {
+      #layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    /* Pannello sinistro (profilo + ricerca) */
+    #leftPanel {
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid #111827;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
     h3 {
-      margin: 4px 0 8px 0;
-      font-size: 17px;
+      margin: 0 0 6px 0;
+      font-size: 15px;
     }
     label {
-      font-size: 13px;
+      font-size: 12px;
       color: #9ca3af;
       display: block;
-      margin-top: 8px;
+      margin-top: 4px;
     }
     input, button {
       width: 100%;
-      padding: 10px;
-      margin-top: 6px;
+      padding: 8px;
+      margin-top: 4px;
       border-radius: 10px;
       border: 1px solid #374151;
       background: #020617;
       color: #f9fafb;
       outline: none;
-      font-size: 14px;
+      font-size: 13px;
     }
     input:focus {
       border-color: #6366f1;
-      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.5);
+      box-shadow: 0 0 0 1px rgba(79,70,229,0.4);
     }
     button {
-      background: linear-gradient(135deg, #4f46e5, #14b8a6);
+      background: linear-gradient(135deg, #4f46e5, #22c55e);
       border: none;
       font-weight: 600;
       cursor: pointer;
-      margin-bottom: 4px;
+      margin-top: 6px;
       transition: transform 0.08s ease, box-shadow 0.08s ease;
     }
     button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.8);
+      box-shadow: 0 8px 18px rgba(15,23,42,0.8);
     }
     button:active {
       transform: translateY(0);
       box-shadow: none;
     }
-    #loginStatus {
-      font-size: 12px;
-      margin-top: 4px;
-      min-height: 16px;
+    #status {
+      font-size: 11px;
       color: #f97373;
+      min-height: 16px;
+      margin-top: 4px;
+    }
+    #savedProfile {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    #searchSection {
+      border-top: 1px solid #111827;
+      padding-top: 8px;
+    }
+    #userList {
+      margin-top: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      border-radius: 10px;
+      border: 1px solid #111827;
+      background: #020617;
+      padding: 4px;
+      font-size: 13px;
+    }
+    .userItem {
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .userItem:hover {
+      background: #111827;
+    }
+    .userItem.active {
+      background: #1d283a;
+      border: 1px solid #4b5563;
+    }
+    .userTag {
+      font-weight: 500;
+      color: #e5e7eb;
+    }
+    .userHint {
+      font-size: 11px;
+      color: #6b7280;
     }
 
-    #chat {
-      display: none;
-      margin-top: 4px;
+    /* Pannello destro (chat) */
+    #rightPanel {
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid #111827;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 400px;
     }
     #chatHeader {
       display: flex;
@@ -114,27 +185,27 @@
       align-items: baseline;
       margin-bottom: 6px;
     }
-    #chatHeader h3 {
-      margin: 0;
+    #chatHeaderTitle {
+      font-size: 14px;
+      font-weight: 600;
     }
-    #chatHeader span {
+    #chatHeaderSub {
       font-size: 11px;
       color: #9ca3af;
     }
-
     #messages {
-      background: #020617;
-      border-radius: 12px;
+      flex: 1;
+      border-radius: 10px;
       border: 1px solid #111827;
-      height: 360px;
-      overflow-y: auto;
+      background: #020617;
       padding: 8px;
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-bottom: 10px;
-      scrollbar-color: #4b5563 #020617;
+      overflow-y: auto;
+      margin-bottom: 8px;
       scrollbar-width: thin;
+      scrollbar-color: #4b5563 #020617;
     }
     #messages::-webkit-scrollbar {
       width: 6px;
@@ -143,24 +214,22 @@
       background: #4b5563;
       border-radius: 999px;
     }
-
     .row {
       display: flex;
       width: 100%;
     }
     .own {
-      justify-content: flex-start;    /* TU a sinistra */
+      justify-content: flex-start; /* TU a sinistra */
     }
     .other {
-      justify-content: flex-end;      /* ALTRI a destra */
+      justify-content: flex-end;   /* LORO a destra */
     }
     .bubble {
       max-width: 75%;
-      padding: 8px 11px;
+      padding: 7px 10px;
       border-radius: 14px;
+      font-size: 13px;
       word-wrap: break-word;
-      font-size: 14px;
-      position: relative;
     }
     .b-own {
       background: linear-gradient(135deg, #4f46e5, #0ea5e9);
@@ -179,16 +248,15 @@
       color: #9ca3af;
       margin: 2px 0;
     }
-
     .file-meta {
       font-size: 11px;
       color: #9ca3af;
     }
     .file-link {
+      font-size: 12px;
       color: #bfdbfe;
       text-decoration: underline;
       cursor: pointer;
-      font-size: 13px;
       display: inline-block;
       margin-top: 4px;
     }
@@ -201,18 +269,18 @@
       border: 1px solid #1f2937;
     }
 
-    #inputRow {
+    #inputArea {
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
-    #inputRow2 {
+    #messageInput {
+      width: 100%;
+    }
+    #bottomInputs {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-    }
-    #messageInput {
-      flex: 1;
     }
     #fileInput {
       flex: 1;
@@ -220,128 +288,130 @@
     #sendFileBtn {
       flex: 0 0 120px;
     }
-
-    @media (max-width: 480px) {
-      .card {
-        padding: 12px;
-      }
-      #messages {
-        height: 300px;
-      }
-      .bubble {
-        max-width: 88%;
-      }
-      #inputRow2 {
-        flex-direction: column;
-      }
-      #sendFileBtn {
-        width: 100%;
-      }
+    @media (max-width: 700px) {
+      .bubble { max-width: 88%; }
+      #rightPanel { min-height: 360px; }
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <div id="login" class="card">
-      <div id="brand">
-        <span class="logo">CipherRoom</span>
-        <span class="badge">E2EE • anonimo</span>
+    <div class="card">
+      <div id="topBar">
+        <div id="brand">
+          <span class="logo">AnonCipher</span>
+          <span class="sub">Chat E2EE anonima · profili @handle</span>
+        </div>
+        <div id="profileInfo">
+          Profilo: <span class="handle" id="profileHandle">nessuno</span>
+        </div>
       </div>
-      <h3>Entra nella stanza</h3>
-      <label>Password stanza (condivisa con chi vuoi)</label>
-      <input id="password" type="password" placeholder="Password stanza" autocomplete="off" />
-      <button id="connectBtn">Connetti</button>
-      <div id="loginStatus"></div>
-    </div>
 
-    <div id="chat" class="card">
-      <div id="chatHeader">
-        <h3>Chat cifrata</h3>
-        <span>Testo, file e immagini cifrati lato client</span>
-      </div>
-      <div id="messages"></div>
-      <div id="inputRow">
-        <input id="messageInput" placeholder="Scrivi e premi invio" autocomplete="off" />
-        <div id="inputRow2">
-          <input id="fileInput" type="file" />
-          <button id="sendFileBtn">Invia file</button>
+      <div id="layout">
+        <div id="leftPanel">
+          <div id="profileSection">
+            <h3>Profilo anonimo</h3>
+            <div id="savedProfile"></div>
+            <label for="usernameInput">Nuovo username (es. @pegasus)</label>
+            <input id="usernameInput" placeholder="@username" autocomplete="off" />
+            <button id="createProfileBtn">Crea profilo</button>
+            <div id="status"></div>
+          </div>
+
+          <div id="searchSection">
+            <h3>Cerca utenti</h3>
+            <label for="searchInput">Cerca @username</label>
+            <input id="searchInput" placeholder="es. @pega" autocomplete="off" />
+            <button id="searchBtn">Cerca</button>
+            <div id="userList"></div>
+          </div>
+        </div>
+
+        <div id="rightPanel">
+          <div id="chatHeader">
+            <div id="chatHeaderTitle">Nessun contatto selezionato</div>
+            <div id="chatHeaderSub">Seleziona un utente a sinistra per iniziare una chat cifrata</div>
+          </div>
+          <div id="messages"></div>
+          <div id="inputArea">
+            <input id="messageInput" placeholder="Scrivi un messaggio e premi invio" autocomplete="off" />
+            <div id="bottomInputs">
+              <input id="fileInput" type="file" />
+              <button id="sendFileBtn">Invia file</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    let socket = null;
-    let roomKey = null;
-
+    // ---- VARIABILI GLOBALI ----
     const enc = new TextEncoder();
     const dec = new TextDecoder();
-    const SALT = enc.encode("chat-e2ee-fixed-salt");
+    const SALT = enc.encode("anoncipher-e2ee-salt"); // per derivazioni se servono
 
-    const passwordInput = document.getElementById("password");
-    const connectBtn = document.getElementById("connectBtn");
-    const loginDiv = document.getElementById("login");
-    const chatDiv = document.getElementById("chat");
-    const loginStatus = document.getElementById("loginStatus");
+    let myUsername = null;
+    let myPrivateKey = null;       // CryptoKey ECDH
+    let myPublicKeyBase64 = null;  // stringa base64 (SPKI) salvata su server
+
+    let socket = null;
+    let currentPeer = null;  // @username
+    const peerPublicKeys = {};   // @user -> CryptoKey
+    const dmKeys = {};           // @user -> AES CryptoKey
+    const fileBuffers = {};      // per ricevere file chunkati
+
+    // ---- DOM ----
+    const profileHandleSpan = document.getElementById("profileHandle");
+    const savedProfileDiv = document.getElementById("savedProfile");
+    const usernameInput = document.getElementById("usernameInput");
+    const createProfileBtn = document.getElementById("createProfileBtn");
+    const statusDiv = document.getElementById("status");
+
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const userListDiv = document.getElementById("userList");
+
+    const chatHeaderTitle = document.getElementById("chatHeaderTitle");
+    const chatHeaderSub = document.getElementById("chatHeaderSub");
     const messagesDiv = document.getElementById("messages");
     const messageInput = document.getElementById("messageInput");
     const fileInput = document.getElementById("fileInput");
     const sendFileBtn = document.getElementById("sendFileBtn");
 
-    const fileBuffers = {}; // key file -> buffer chunks
+    // ---- UTIL ----
 
-    async function deriveKey(password) {
-      const keyMaterial = await crypto.subtle.importKey(
-        "raw",
-        enc.encode(password),
-        { name: "PBKDF2" },
-        false,
-        ["deriveKey"]
-      );
-      return crypto.subtle.deriveKey(
-        {
-          name: "PBKDF2",
-          salt: SALT,
-          iterations: 200000,
-          hash: "SHA-256"
-        },
-        keyMaterial,
-        { name: "AES-GCM", length: 256 },
-        false,
-        ["encrypt", "decrypt"]
-      );
+    function setProfileInfo(username) {
+      if (!username) {
+        profileHandleSpan.textContent = "nessuno";
+        savedProfileDiv.textContent = "Nessun profilo salvato. Creane uno anonimo con un @username.";
+      } else {
+        profileHandleSpan.textContent = username;
+        savedProfileDiv.textContent = `Profilo locale presente: ${username}. La chiave privata è salvata solo nel tuo browser.`;
+      }
     }
 
-    async function getRoomId(password) {
-      const hashBuffer = await crypto.subtle.digest("SHA-256", enc.encode(password));
-      const bytes = new Uint8Array(hashBuffer);
-      return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+    function addSystem(msg) {
+      const d = document.createElement("div");
+      d.className = "sys";
+      d.textContent = msg;
+      messagesDiv.appendChild(d);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
-    async function encryptText(key, text) {
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const ciphertext = await crypto.subtle.encrypt(
-        { name: "AES-GCM", iv },
-        key,
-        enc.encode(text)
-      );
-      const ctArray = new Uint8Array(ciphertext);
-      const all = new Uint8Array(iv.length + ctArray.length);
-      all.set(iv, 0);
-      all.set(ctArray, iv.length);
-      return btoa(String.fromCharCode(...all));
-    }
-
-    async function decryptText(key, b64) {
-      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-      const iv = bytes.slice(0, 12);
-      const ct = bytes.slice(12);
-      const plain = await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv },
-        key,
-        ct
-      );
-      return dec.decode(plain);
+    function addBubble(content, own) {
+      const row = document.createElement("div");
+      row.className = "row " + (own ? "own" : "other");
+      const bubble = document.createElement("div");
+      bubble.className = "bubble " + (own ? "b-own" : "b-other");
+      if (typeof content === "string") {
+        bubble.textContent = content;
+      } else {
+        bubble.appendChild(content);
+      }
+      row.appendChild(bubble);
+      messagesDiv.appendChild(row);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
     function bytesToBase64(bytes) {
@@ -361,67 +431,181 @@
       return bytes;
     }
 
-    function addSystem(msg) {
-      const d = document.createElement("div");
-      d.className = "sys";
-      d.textContent = msg;
-      messagesDiv.appendChild(d);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    async function exportPublicKeyBase64(pubKey) {
+      const spki = await crypto.subtle.exportKey("spki", pubKey);
+      return bytesToBase64(new Uint8Array(spki));
     }
 
-    function addBubble(content, own) {
-      const row = document.createElement("div");
-      row.className = "row " + (own ? "own" : "other");
-
-      const bubble = document.createElement("div");
-      bubble.className = "bubble " + (own ? "b-own" : "b-other");
-
-      if (typeof content === "string") {
-        bubble.textContent = content;
-      } else {
-        bubble.appendChild(content);
-      }
-
-      row.appendChild(bubble);
-      messagesDiv.appendChild(row);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    async function importPublicKeyFromBase64(b64) {
+      const der = base64ToBytes(b64);
+      return crypto.subtle.importKey(
+        "spki",
+        der,
+        { name: "ECDH", namedCurve: "P-256" },
+        true,
+        []
+      );
     }
 
-    connectBtn.onclick = async () => {
-      const password = passwordInput.value.trim();
-      if (!password) {
-        loginStatus.textContent = "Metti una password decente.";
+    async function importPrivateKeyFromJwk(jwk) {
+      return crypto.subtle.importKey(
+        "jwk",
+        jwk,
+        { name: "ECDH", namedCurve: "P-256" },
+        true,
+        ["deriveKey"]
+      );
+    }
+
+    async function deriveDmKey(peerUsername) {
+      if (dmKeys[peerUsername]) return dmKeys[peerUsername];
+
+      const pk = peerPublicKeys[peerUsername];
+      if (!pk) throw new Error("Public key peer mancante");
+
+      const key = await crypto.subtle.deriveKey(
+        { name: "ECDH", public: pk },
+        myPrivateKey,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+      dmKeys[peerUsername] = key;
+      return key;
+    }
+
+    async function encryptForPeer(peerUsername, plainObj) {
+      const key = await deriveDmKey(peerUsername);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const plain = enc.encode(JSON.stringify(plainObj));
+      const ciphertext = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        key,
+        plain
+      );
+      const ctArray = new Uint8Array(ciphertext);
+      const all = new Uint8Array(iv.length + ctArray.length);
+      all.set(iv, 0);
+      all.set(ctArray, iv.length);
+      return bytesToBase64(all);
+    }
+
+    async function decryptFromPeer(peerUsername, b64) {
+      const key = await deriveDmKey(peerUsername);
+      const all = base64ToBytes(b64);
+      const iv = all.slice(0, 12);
+      const ct = all.slice(12);
+      const plain = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        key,
+        ct
+      );
+      return JSON.parse(dec.decode(plain));
+    }
+
+    // ---- PROFILE: load from localStorage se esiste ----
+
+    async function loadProfileFromStorage() {
+      const stored = localStorage.getItem("anonProfile");
+      if (!stored) {
+        setProfileInfo(null);
         return;
       }
-
-      loginStatus.textContent = "Derivo chiave...";
       try {
-        roomKey = await deriveKey(password);
+        const obj = JSON.parse(stored);
+        if (!obj.username || !obj.privateKeyJwk || !obj.publicKeyBase64) {
+          setProfileInfo(null);
+          return;
+        }
+        myUsername = obj.username;
+        myPrivateKey = await importPrivateKeyFromJwk(obj.privateKeyJwk);
+        myPublicKeyBase64 = obj.publicKeyBase64;
+        setProfileInfo(myUsername);
       } catch {
-        loginStatus.textContent = "Errore derivazione chiave.";
+        setProfileInfo(null);
+      }
+    }
+
+    // ---- PROFILE: create new anonymous account ----
+
+    createProfileBtn.onclick = async () => {
+      const handle = usernameInput.value.trim();
+      if (!handle || !handle.startsWith("@") || handle.length < 3) {
+        statusDiv.textContent = "Username non valido. Esempio: @pegasus";
         return;
       }
+      statusDiv.textContent = "Generazione chiavi...";
 
-      const roomId = await getRoomId(password);
-      loginStatus.textContent = "Connessione...";
+      try {
+        const keyPair = await crypto.subtle.generateKey(
+          {
+            name: "ECDH",
+            namedCurve: "P-256"
+          },
+          true,
+          ["deriveKey"]
+        );
 
-      const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
-      socket = new WebSocket(`${wsProtocol}://${location.host}`);
+        const pubB64 = await exportPublicKeyBase64(keyPair.publicKey);
+        const privJwk = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+
+        // salva localmente
+        const profile = {
+          username: handle,
+          privateKeyJwk: privJwk,
+          publicKeyBase64: pubB64
+        };
+        localStorage.setItem("anonProfile", JSON.stringify(profile));
+
+        // registra sul server
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: handle,
+            publicKey: pubB64
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          statusDiv.textContent = data.error || "Errore registrazione";
+          return;
+        }
+
+        myUsername = handle;
+        myPrivateKey = keyPair.privateKey;
+        myPublicKeyBase64 = pubB64;
+        setProfileInfo(myUsername);
+        statusDiv.textContent = "Profilo creato. Connettendo al server...";
+
+        connectWebSocket();
+      } catch (e) {
+        console.error(e);
+        statusDiv.textContent = "Errore creazione profilo.";
+      }
+    };
+
+    // ---- WebSocket ----
+
+    function connectWebSocket() {
+      if (!myUsername) {
+        statusDiv.textContent = "Crea prima un profilo.";
+        return;
+      }
+      if (socket && socket.readyState === WebSocket.OPEN) return;
+
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(`${proto}://${location.host}`);
 
       socket.onopen = () => {
-        socket.send(JSON.stringify({
-          type: "join",
-          roomId
-        }));
+        socket.send(JSON.stringify({ type: "auth", username: myUsername }));
       };
 
-      socket.onmessage = async (ev) => {
+      socket.onmessage = async ev => {
         const data = JSON.parse(ev.data);
 
-        if (data.type === "welcome") {
-          loginDiv.style.display = "none";
-          chatDiv.style.display = "block";
-          addSystem("Connesso. Tutto cifrato lato client.");
+        if (data.type === "auth-ok") {
+          statusDiv.textContent = `Connesso come ${data.username}`;
           return;
         }
 
@@ -430,108 +614,175 @@
           return;
         }
 
-        if (data.type === "message") {
+        if (data.type === "dm") {
+          const from = data.from;
+          const ciphertext = data.ciphertext;
           try {
-            const plain = await decryptText(roomKey, data.ciphertext);
-            let obj;
-            try {
-              obj = JSON.parse(plain);
-            } catch {
-              // vecchio formato solo testo
-              addBubble(plain, false);
-              return;
+            // assicuriamoci di avere la publicKey del mittente
+            if (!peerPublicKeys[from]) {
+              const r = await fetch(`/api/users/${encodeURIComponent(from)}`);
+              if (r.ok) {
+                const u = await r.json();
+                peerPublicKeys[from] = await importPublicKeyFromBase64(u.publicKey);
+              } else {
+                addSystem(`Messaggio da ${from} ma utente non trovato`);
+                return;
+              }
             }
 
-            if (obj.kind === "text") {
-              addBubble(obj.body, false);
-              return;
+            const plainObj = await decryptFromPeer(from, ciphertext);
+
+            if (plainObj.kind === "text") {
+              if (currentPeer !== from) {
+                // se non è la chat aperta, la mostriamo comunque come messaggio
+                addSystem(`Nuovo messaggio da ${from}`);
+              }
+              addBubble(plainObj.body, false);
+            } else if (plainObj.kind === "file-chunk") {
+              handleIncomingFileChunk(from, plainObj);
             }
-
-            if (obj.kind === "file-chunk") {
-              const key = `${obj.name}|${obj.size}|${obj.mime}`;
-              if (!fileBuffers[key]) {
-                fileBuffers[key] = {
-                  mime: obj.mime,
-                  size: obj.size,
-                  totalChunks: obj.totalChunks,
-                  chunks: new Array(obj.totalChunks),
-                  received: 0
-                };
-              }
-              const fb = fileBuffers[key];
-              if (!fb.chunks[obj.chunkIndex]) {
-                fb.chunks[obj.chunkIndex] = obj.data;
-                fb.received++;
-              }
-
-              if (fb.received === fb.totalChunks) {
-                const parts = [];
-                for (let i = 0; i < fb.totalChunks; i++) {
-                  parts.push(base64ToBytes(fb.chunks[i]));
-                }
-                const blob = new Blob(parts, { type: fb.mime || "application/octet-stream" });
-                const url = URL.createObjectURL(blob);
-
-                const metaDiv = document.createElement("div");
-                const nameSpan = document.createElement("div");
-                nameSpan.className = "file-meta";
-                nameSpan.textContent = `${obj.name} (${Math.round(obj.size / 1024)} KB)`;
-                const link = document.createElement("a");
-                link.className = "file-link";
-                link.href = url;
-                link.textContent = "Scarica";
-                link.download = obj.name || "file";
-                metaDiv.appendChild(nameSpan);
-                metaDiv.appendChild(link);
-
-                if (fb.mime && fb.mime.startsWith("image/")) {
-                  const img = document.createElement("img");
-                  img.src = url;
-                  img.className = "preview";
-                  metaDiv.appendChild(img);
-                }
-
-                addBubble(metaDiv, false);
-                delete fileBuffers[key];
-              }
-              return;
-            }
-
-            // fallback
-            addBubble(plain, false);
-          } catch {
-            addSystem("[Messaggio non decifrabile (password diversa?)]");
+          } catch (e) {
+            console.error(e);
+            addSystem(`[Messaggio non decifrabile da ${from}]`);
           }
         }
       };
 
       socket.onclose = () => {
-        addSystem("Connessione chiusa.");
+        statusDiv.textContent = "WS disconnesso. Ricarica per riconnetterti.";
       };
 
       socket.onerror = () => {
-        loginStatus.textContent = "Errore di connessione.";
+        statusDiv.textContent = "Errore WebSocket.";
       };
-    };
+    }
+
+    // ---- FILE CHUNK HANDLING ----
+
+    function handleIncomingFileChunk(from, obj) {
+      const key = `${from}|${obj.name}|${obj.size}`;
+      if (!fileBuffers[key]) {
+        fileBuffers[key] = {
+          mime: obj.mime,
+          size: obj.size,
+          totalChunks: obj.totalChunks,
+          chunks: new Array(obj.totalChunks),
+          received: 0
+        };
+      }
+      const fb = fileBuffers[key];
+      if (!fb.chunks[obj.chunkIndex]) {
+        fb.chunks[obj.chunkIndex] = obj.data;
+        fb.received++;
+      }
+
+      if (fb.received === fb.totalChunks) {
+        const parts = [];
+        for (let i = 0; i < fb.totalChunks; i++) {
+          parts.push(base64ToBytes(fb.chunks[i]));
+        }
+        const blob = new Blob(parts, { type: fb.mime || "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+
+        const metaDiv = document.createElement("div");
+        const nameSpan = document.createElement("div");
+        nameSpan.className = "file-meta";
+        nameSpan.textContent = `${obj.name} (${Math.round(obj.size / 1024)} KB) da ${from}`;
+        const link = document.createElement("a");
+        link.className = "file-link";
+        link.href = url;
+        link.textContent = "Scarica";
+        link.download = obj.name || "file";
+        metaDiv.appendChild(nameSpan);
+        metaDiv.appendChild(link);
+
+        if (fb.mime && fb.mime.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = url;
+          img.className = "preview";
+          metaDiv.appendChild(img);
+        }
+
+        addBubble(metaDiv, false);
+        delete fileBuffers[key];
+      }
+    }
+
+    // ---- SEARCH UTENTI ----
+
+    async function searchUsers() {
+      const q = searchInput.value.trim();
+      const res = await fetch(`/api/users?search=${encodeURIComponent(q)}`);
+      const list = await res.json();
+      renderUserList(list);
+    }
+
+    function renderUserList(list) {
+      userListDiv.innerHTML = "";
+      list.forEach(u => {
+        const div = document.createElement("div");
+        div.className = "userItem" + (currentPeer === u.username ? " active" : "");
+        const tag = document.createElement("span");
+        tag.className = "userTag";
+        tag.textContent = u.username;
+        const hint = document.createElement("span");
+        hint.className = "userHint";
+        hint.textContent = "Chat cifrata";
+        div.appendChild(tag);
+        div.appendChild(hint);
+        div.onclick = async () => {
+          currentPeer = u.username;
+          Array.from(userListDiv.children).forEach(c => c.classList.remove("active"));
+          div.classList.add("active");
+          chatHeaderTitle.textContent = `Chat con ${currentPeer}`;
+          chatHeaderSub.textContent = "Scambio end-to-end con chiave derivata ECDH.";
+          messagesDiv.innerHTML = "";
+          addSystem(`Chat con ${currentPeer} pronta. I tuoi messaggi sono cifrati end-to-end.`);
+
+          // prepara chiave peer
+          if (!peerPublicKeys[currentPeer]) {
+            peerPublicKeys[currentPeer] = await importPublicKeyFromBase64(u.publicKey);
+          }
+          await deriveDmKey(currentPeer);
+        };
+        userListDiv.appendChild(div);
+      });
+    }
+
+    searchBtn.onclick = searchUsers;
+
+    // ---- INVIO MESSAGGI DI TESTO ----
 
     messageInput.addEventListener("keydown", async e => {
       if (e.key !== "Enter") return;
       const text = messageInput.value.trim();
-      if (!text || !socket || socket.readyState !== WebSocket.OPEN || !roomKey) return;
+      if (!text || !socket || socket.readyState !== WebSocket.OPEN || !myUsername || !currentPeer) return;
 
-      const payload = JSON.stringify({
+      const payload = {
         kind: "text",
-        body: text
-      });
-      const ciphertext = await encryptText(roomKey, payload);
-      socket.send(JSON.stringify({ type: "message", ciphertext }));
-      addBubble(text, true);
-      messageInput.value = "";
+        body: text,
+        ts: Date.now()
+      };
+      try {
+        const ciphertext = await encryptForPeer(currentPeer, payload);
+        socket.send(JSON.stringify({
+          type: "dm",
+          to: currentPeer,
+          ciphertext
+        }));
+        addBubble(text, true);
+        messageInput.value = "";
+      } catch (e2) {
+        console.error(e2);
+        addSystem("Errore nella cifratura del messaggio.");
+      }
     });
+
+    // ---- INVIO FILE ----
 
     sendFileBtn.onclick = async () => {
       const file = fileInput.files[0];
-      if (!file || !socket || socket.readyState !== WebSocket.OPEN || !roomKey) return;
+      if (!file || !socket || socket.readyState !== WebSocket.OPEN || !myUsername || !currentPeer) return;
 
       if (file.size > 8 * 1024 * 1024) {
         addSystem("File troppo grosso (max 8MB).");
@@ -551,7 +802,7 @@
             const chunk = bytes.slice(start, end);
             const b64 = bytesToBase64(chunk);
 
-            const payload = JSON.stringify({
+            const payload = {
               kind: "file-chunk",
               name: file.name,
               mime: file.type || "application/octet-stream",
@@ -559,10 +810,14 @@
               totalChunks,
               chunkIndex: i,
               data: b64
-            });
+            };
 
-            const ciphertext = await encryptText(roomKey, payload);
-            socket.send(JSON.stringify({ type: "message", ciphertext }));
+            const ciphertext = await encryptForPeer(currentPeer, payload);
+            socket.send(JSON.stringify({
+              type: "dm",
+              to: currentPeer,
+              ciphertext
+            }));
           }
 
           const metaDiv = document.createElement("div");
@@ -584,12 +839,25 @@
 
           addBubble(metaDiv, true);
           fileInput.value = "";
-        } catch {
+        } catch (e) {
+          console.error(e);
           addSystem("Errore durante l'invio del file.");
         }
       };
       reader.readAsArrayBuffer(file);
     };
+
+    // ---- INIT ----
+
+    (async () => {
+      await loadProfileFromStorage();
+      if (myUsername && myPrivateKey) {
+        statusDiv.textContent = "Profilo locale caricato. Mi collego al server...";
+        connectWebSocket();
+      } else {
+        statusDiv.textContent = "Crea un profilo anonimo per iniziare.";
+      }
+    })();
   </script>
 </body>
 </html>
