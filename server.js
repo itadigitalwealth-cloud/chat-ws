@@ -1,151 +1,111 @@
 // server.js
-const WebSocket = require("ws");
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const WebSocket = require("ws");
 
 const PORT = process.env.PORT || 8080;
 
-// roomPassword -> Set di socket
-const rooms = new Map();
-
-// rate limiting: max N messaggi ogni finestraMs per socket
-const WINDOW_MS = 5000;      // 5 secondi
+// RATE LIMIT
+const WINDOW_MS = 5000;
 const MAX_MSG_PER_WINDOW = 20;
-
-// socket -> array timestamps messaggi
 const rateState = new Map();
 
-function logMinimal(msg) {
-  const ts = new Date().toISOString();
-  console.log(`[${ts}] ${msg}`);
-}
-
-function checkRateLimit(ws) {
+function checkRate(ws) {
   const now = Date.now();
   let arr = rateState.get(ws);
-  if (!arr) {
-    arr = [];
-    rateState.set(ws, arr);
-  }
-  // tieni solo gli ultimi WINDOW_MS
+  if (!arr) arr = [];
   const cutoff = now - WINDOW_MS;
-  const recent = arr.filter(t => t >= cutoff);
-  recent.push(now);
-  rateState.set(ws, recent);
-  return recent.length <= MAX_MSG_PER_WINDOW;
+  arr = arr.filter(t => t >= cutoff);
+  arr.push(now);
+  rateState.set(ws, arr);
+  return arr.length <= MAX_MSG_PER_WINDOW;
 }
 
-function broadcastToRoom(roomPassword, data, excludeSocket = null) {
-  const room = rooms.get(roomPassword);
-  if (!room) return;
+// MAPPA STANZE
+const rooms = new Map();
 
+// SERVER HTTP PER SERVIRE index.html
+const server = http.createServer((req, res) => {
+  const file = path.join(__dirname, "index.html");
+  fs.readFile(file, (err, data) => {
+    if (err) {
+      res.writeHead(500);
+      return res.end("Errore interno");
+    }
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(data);
+  });
+});
+
+// WEBSOCKET
+const wss = new WebSocket.Server({ server });
+
+function broadcast(room, data, exclude) {
+  const r = rooms.get(room);
+  if (!r) return;
   const payload = JSON.stringify(data);
-
-  for (const clientSocket of room) {
-    if (
-      clientSocket !== excludeSocket &&
-      clientSocket.readyState === WebSocket.OPEN
-    ) {
-      clientSocket.send(payload);
+  for (const client of r) {
+    if (client !== exclude && client.readyState === WebSocket.OPEN) {
+      client.send(payload);
     }
   }
 }
 
-const server = http.createServer();
-const wss = new WebSocket.Server({ server });
-
 wss.on("connection", (ws, req) => {
   const ip = req.socket.remoteAddress;
-  logMinimal(`Nuova connessione da ${ip}`);
-
   let roomPassword = null;
 
-  ws.on("message", (message) => {
+  ws.on("message", msg => {
     let data;
     try {
-      data = JSON.parse(message.toString());
+      data = JSON.parse(msg.toString());
     } catch {
       return;
     }
 
+    // JOIN
     if (data.type === "join") {
-      const { password } = data;
-      if (!password) {
-        ws.send(JSON.stringify({ type: "error", message: "Password mancante" }));
-        return;
-      }
-
+      const password = data.password;
       roomPassword = password;
 
-      if (!rooms.has(password)) {
-        rooms.set(password, new Set());
-      }
+      if (!rooms.has(password)) rooms.set(password, new Set());
       rooms.get(password).add(ws);
 
-      logMinimal(`Client da ${ip} entrato nella stanza ${password}`);
+      ws.send(JSON.stringify({ 
+        type: "welcome",
+        message: "Sei connesso alla stanza cifrata."
+      }));
+      return;
+    }
 
-      ws.send(
-        JSON.stringify({
-          type: "welcome",
-          message: "Sei connesso alla stanza cifrata.",
-        })
-      );
-
-    } else if (data.type === "message") {
-      if (!roomPassword) {
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            message: "Non sei in nessuna stanza.",
-          })
-        );
+    // MESSAGGIO
+    if (data.type === "message") {
+      if (!checkRate(ws)) {
+        ws.send(JSON.stringify({ type: "error", message: "Rallenta." }));
         return;
       }
 
-      if (!checkRateLimit(ws)) {
-        logMinimal(`Rate limit superato da ${ip} in stanza ${roomPassword}`);
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            message: "Stai inviando troppi messaggi, rallenta.",
-          })
-        );
-        return;
-      }
-
-      const { ciphertext } = data;
+      const ciphertext = data.ciphertext;
       if (!ciphertext) return;
 
-      // il server NON decifra niente, inoltra solo blob cifrati
-      broadcastToRoom(roomPassword, {
+      broadcast(roomPassword, {
         type: "message",
-        ciphertext,
+        ciphertext
       }, ws);
-
-    } else {
-      ws.send(
-        JSON.stringify({
-          type: "error",
-          message: "Tipo di messaggio sconosciuto",
-        })
-      );
     }
   });
 
   ws.on("close", () => {
-    if (roomPassword) {
-      const room = rooms.get(roomPassword);
-      if (room) {
-        room.delete(ws);
-        if (room.size === 0) rooms.delete(roomPassword);
-      }
-      logMinimal(`Client da ${ip} uscito dalla stanza ${roomPassword}`);
-    } else {
-      logMinimal(`Client da ${ip} disconnesso senza stanza`);
+    if (roomPassword && rooms.has(roomPassword)) {
+      rooms.get(roomPassword).delete(ws);
+      if (rooms.get(roomPassword).size === 0)
+        rooms.delete(roomPassword);
     }
     rateState.delete(ws);
   });
 });
 
 server.listen(PORT, () => {
-  logMinimal(`Server WebSocket in ascolto sulla porta ${PORT}`);
+  console.log("Server attivo su porta " + PORT);
 });
