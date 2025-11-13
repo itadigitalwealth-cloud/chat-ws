@@ -1,16 +1,12 @@
 {
-  "name": "chat-ws",
+  "name": "secure-chat-anon",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server/server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "ws": "^8.18.3"
+    "ws": "^8.14.2",
+    "bcryptjs": "^2.4.3",
+    "uuid": "^9.0.0"
   }
 }
