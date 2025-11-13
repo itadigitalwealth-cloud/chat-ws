@@ -3,214 +3,466 @@
 <head>
   <meta charset="UTF-8" />
   <title>Chat E2EE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    :root {
+      color-scheme: dark;
+    }
     body {
-      font-family: system-ui;
-      background: #0b0b0f;
-      color: #eee;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #050509;
+      color: #f3f4f6;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      padding: 16px;
+    }
+    #app {
+      width: 100%;
+      max-width: 600px;
     }
     #login, #chat {
-      width: 420px;
-      background: #14141b;
+      background: #111827;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
       padding: 16px;
-      border-radius: 10px;
-      border: 1px solid #333;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    #chat { display: none; }
+    #chat {
+      display: none;
+      margin-top: 12px;
+    }
+    h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+    label {
+      font-size: 13px;
+      color: #9ca3af;
+    }
     input, button {
       width: 100%;
       padding: 10px;
       margin-top: 6px;
-      border-radius: 6px;
-      border: 1px solid #444;
-      background: #1f1f29;
-      color: #eee;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #f9fafb;
+      outline: none;
+      font-size: 14px;
+    }
+    input:focus {
+      border-color: #6366f1;
     }
     button {
       background: #4f46e5;
       border-color: #4f46e5;
+      font-weight: 600;
       cursor: pointer;
-      margin-bottom: 10px;
+      margin-bottom: 4px;
+    }
+    button:hover {
+      filter: brightness(1.1);
+    }
+    #loginStatus {
+      font-size: 12px;
+      min-height: 16px;
+      color: #f97373;
+      margin-top: 4px;
     }
     #messages {
-      background: #101018;
-      border: 1px solid #333;
-      height: 300px;
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid #111827;
+      height: 320px;
       overflow-y: auto;
       padding: 8px;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      margin-bottom: 8px;
     }
-    .row { display: flex; }
-    .own { justify-content: flex-end; }
-    .other { justify-content: flex-start; }
+    .row {
+      display: flex;
+    }
+    .own {
+      justify-content: flex-start;   /* TU a sinistra */
+    }
+    .other {
+      justify-content: flex-end;     /* ALTRI a destra */
+    }
     .bubble {
-      max-width: 70%;
-      padding: 6px 10px;
+      max-width: 75%;
+      padding: 8px 10px;
       border-radius: 12px;
-      word-break: break-word;
+      word-wrap: break-word;
+      font-size: 14px;
     }
     .b-own {
       background: #4f46e5;
-      color: #fff;
-      border-bottom-right-radius: 2px;
+      color: #f9fafb;
+      border-bottom-left-radius: 2px;
     }
     .b-other {
-      background: #1f2933;
-      border-bottom-left-radius: 2px;
+      background: #1f2937;
+      color: #e5e7eb;
+      border-bottom-right-radius: 2px;
     }
     .sys {
       text-align: center;
-      font-size: 12px;
-      color: #aaa;
+      font-size: 11px;
+      color: #9ca3af;
+      margin: 2px 0;
+    }
+    .file-link {
+      color: #bfdbfe;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 13px;
+      display: inline-block;
+      margin-top: 4px;
+    }
+    .file-meta {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    img.preview {
+      max-width: 200px;
+      max-height: 200px;
+      display: block;
+      margin-top: 4px;
+      border-radius: 8px;
+    }
+    #inputRow {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    #inputRow2 {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    #messageInput {
+      flex: 1;
+    }
+    #fileInput {
+      flex: 1;
+    }
+    #sendFileBtn {
+      flex: 0 0 120px;
+    }
+
+    @media (max-width: 480px) {
+      #messages {
+        height: 260px;
+      }
+      .bubble {
+        max-width: 85%;
+      }
+      #inputRow2 {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
-
 <body>
+  <div id="app">
+    <div id="login">
+      <h3>Entra nella stanza cifrata</h3>
+      <label>Password stanza (condivisa)</label>
+      <input id="password" type="password" placeholder="Password stanza" autocomplete="off" />
+      <button id="connectBtn">Connetti</button>
+      <div id="loginStatus"></div>
+    </div>
 
-<div id="login">
-  <h3>Entra</h3>
-  <input id="password" type="password" placeholder="Password stanza" />
-  <button id="connectBtn">Connetti</button>
-  <div id="loginStatus"></div>
-</div>
+    <div id="chat">
+      <h3>Chat E2EE anonima</h3>
+      <div id="messages"></div>
+      <div id="inputRow">
+        <input id="messageInput" placeholder="Scrivi e premi invio" autocomplete="off" />
+        <div id="inputRow2">
+          <input id="fileInput" type="file" />
+          <button id="sendFileBtn">Invia file</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<div id="chat">
-  <h3>Chat Cifrata</h3>
-  <div id="messages"></div>
-  <input id="messageInput" placeholder="Scrivi e premi invio" />
-</div>
+  <script>
+    let socket = null;
+    let roomKey = null;
 
-<script>
-  let socket;
-  let roomKey;
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
+    const enc = new TextEncoder();
+    const dec = new TextDecoder();
+    const SALT = enc.encode("chat-e2ee-fixed-salt"); // per PBKDF2
 
-  const SALT = enc.encode("chat-salt-costante");
+    const passwordInput = document.getElementById("password");
+    const connectBtn = document.getElementById("connectBtn");
+    const loginDiv = document.getElementById("login");
+    const chatDiv = document.getElementById("chat");
+    const loginStatus = document.getElementById("loginStatus");
+    const messagesDiv = document.getElementById("messages");
+    const messageInput = document.getElementById("messageInput");
+    const fileInput = document.getElementById("fileInput");
+    const sendFileBtn = document.getElementById("sendFileBtn");
 
-  async function deriveKey(password) {
-    const m = await crypto.subtle.importKey(
-      "raw",
-      enc.encode(password),
-      { name: "PBKDF2" },
-      false,
-      ["deriveKey"]
-    );
-    return crypto.subtle.deriveKey(
-      {
-        name: "PBKDF2",
-        salt: SALT,
-        iterations: 200000,
-        hash: "SHA-256"
-      },
-      m,
-      { name: "AES-GCM", length: 256 },
-      false,
-      ["encrypt", "decrypt"]
-    );
-  }
+    async function deriveKey(password) {
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(password),
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+      );
+      return crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: SALT,
+          iterations: 200000,
+          hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
 
-  async function encryptText(key, text) {
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(text));
-    const a = new Uint8Array(ct);
-    const out = new Uint8Array(iv.length + a.length);
-    out.set(iv, 0);
-    out.set(a, iv.length);
-    return btoa(String.fromCharCode(...out));
-  }
+    async function getRoomId(password) {
+      const hashBuffer = await crypto.subtle.digest("SHA-256", enc.encode(password));
+      const bytes = new Uint8Array(hashBuffer);
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
 
-  async function decryptText(key, b64) {
-    const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    const iv = bin.slice(0, 12);
-    const ct = bin.slice(12);
-    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
-    return dec.decode(plain);
-  }
+    async function encryptText(key, text) {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ciphertext = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        key,
+        enc.encode(text)
+      );
+      const ctArray = new Uint8Array(ciphertext);
+      const all = new Uint8Array(iv.length + ctArray.length);
+      all.set(iv, 0);
+      all.set(ctArray, iv.length);
+      return btoa(String.fromCharCode(...all));
+    }
 
-  function addSys(msg) {
-    const d = document.createElement("div");
-    d.className = "sys";
-    d.textContent = msg;
-    messages.appendChild(d);
-    messages.scrollTop = messages.scrollHeight;
-  }
+    async function decryptText(key, b64) {
+      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+      const iv = bytes.slice(0, 12);
+      const ct = bytes.slice(12);
+      const plain = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        key,
+        ct
+      );
+      return dec.decode(plain);
+    }
 
-  function addMsg(text, own) {
-    const row = document.createElement("div");
-    row.className = "row " + (own ? "own" : "other");
-    const b = document.createElement("div");
-    b.className = "bubble " + (own ? "b-own" : "b-other");
-    b.textContent = text;
-    row.appendChild(b);
-    messages.appendChild(row);
-    messages.scrollTop = messages.scrollHeight;
-  }
+    function addSystem(msg) {
+      const d = document.createElement("div");
+      d.className = "sys";
+      d.textContent = msg;
+      messagesDiv.appendChild(d);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
 
-  const passwordInput = document.getElementById("password");
-  const connectBtn = document.getElementById("connectBtn");
-  const login = document.getElementById("login");
-  const chat = document.getElementById("chat");
-  const messages = document.getElementById("messages");
-  const messageInput = document.getElementById("messageInput");
+    function addBubble(textOrNode, own) {
+      const row = document.createElement("div");
+      row.className = "row " + (own ? "own" : "other");
+      const bubble = document.createElement("div");
+      bubble.className = "bubble " + (own ? "b-own" : "b-other");
 
-  connectBtn.onclick = async () => {
-    const pass = passwordInput.value.trim();
-    if (!pass) return;
+      if (typeof textOrNode === "string") {
+        bubble.textContent = textOrNode;
+      } else {
+        bubble.appendChild(textOrNode);
+      }
 
-    roomKey = await deriveKey(pass);
+      row.appendChild(bubble);
+      messagesDiv.appendChild(row);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
 
-    socket = new WebSocket(`wss://${location.host}`);
+    function bytesToBase64(bytes) {
+      const bin = String.fromCharCode(...bytes);
+      return btoa(bin);
+    }
 
-    socket.onopen = () => {
-      socket.send(JSON.stringify({ type: "join", password: pass }));
-    };
+    function base64ToBytes(b64) {
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) {
+        bytes[i] = bin.charCodeAt(i);
+      }
+      return bytes;
+    }
 
-    socket.onmessage = async ev => {
-      const data = JSON.parse(ev.data);
-
-      if (data.type === "welcome") {
-        login.style.display = "none";
-        chat.style.display = "block";
-        addSys("Connesso. Tutto cifrato.");
+    connectBtn.onclick = async () => {
+      const password = passwordInput.value.trim();
+      if (!password) {
+        loginStatus.textContent = "Metti una password decente.";
         return;
       }
 
-      if (data.type === "error") {
-        addSys(data.message);
+      loginStatus.textContent = "Derivo chiave...";
+      try {
+        roomKey = await deriveKey(password);
+      } catch {
+        loginStatus.textContent = "Errore derivazione chiave.";
         return;
       }
 
-      if (data.type === "message") {
-        try {
-          const t = await decryptText(roomKey, data.ciphertext);
-          addMsg(t, false);
-        } catch {
-          addSys("[Non decifrabile]");
+      const roomId = await getRoomId(password);
+      loginStatus.textContent = "Connessione...";
+
+      socket = new WebSocket(`wss://${location.host}`);
+
+      socket.onopen = () => {
+        socket.send(JSON.stringify({
+          type: "join",
+          roomId
+        }));
+      };
+
+      socket.onmessage = async (ev) => {
+        const data = JSON.parse(ev.data);
+
+        if (data.type === "welcome") {
+          loginDiv.style.display = "none";
+          chatDiv.style.display = "block";
+          addSystem("Connesso. Messaggi, file e immagini sono cifrati lato client.");
+          return;
         }
-      }
+
+        if (data.type === "error") {
+          addSystem(data.message);
+          return;
+        }
+
+        if (data.type === "message") {
+          try {
+            const plain = await decryptText(roomKey, data.ciphertext);
+            let obj;
+            try {
+              obj = JSON.parse(plain);
+            } catch {
+              // vecchio messaggio solo testo
+              addBubble(plain, false);
+              return;
+            }
+
+            if (obj.kind === "text") {
+              addBubble(obj.body, false);
+            } else if (obj.kind === "file") {
+              const metaDiv = document.createElement("div");
+              const nameSpan = document.createElement("div");
+              nameSpan.className = "file-meta";
+              nameSpan.textContent = `${obj.name} (${Math.round(obj.size / 1024)} KB)`;
+              const link = document.createElement("a");
+              link.className = "file-link";
+              link.textContent = "Scarica";
+              const bytes = base64ToBytes(obj.data);
+              const blob = new Blob([bytes], { type: obj.mime || "application/octet-stream" });
+              const url = URL.createObjectURL(blob);
+              link.href = url;
+              link.download = obj.name || "file";
+
+              metaDiv.appendChild(nameSpan);
+              metaDiv.appendChild(link);
+
+              if (obj.mime && obj.mime.startsWith("image/")) {
+                const img = document.createElement("img");
+                img.src = url;
+                img.className = "preview";
+                metaDiv.appendChild(img);
+              }
+
+              addBubble(metaDiv, false);
+            } else {
+              addBubble(plain, false);
+            }
+          } catch {
+            addSystem("[Messaggio non decifrabile (password diversa?)]");
+          }
+        }
+      };
+
+      socket.onclose = () => {
+        addSystem("Connessione chiusa.");
+      };
+
+      socket.onerror = () => {
+        loginStatus.textContent = "Errore di connessione.";
+      };
     };
-  };
 
-  messageInput.addEventListener("keydown", async e => {
-    if (e.key !== "Enter") return;
-    const t = messageInput.value.trim();
-    if (!t || !socket || socket.readyState !== WebSocket.OPEN) return;
+    messageInput.addEventListener("keydown", async (e) => {
+      if (e.key !== "Enter") return;
+      const text = messageInput.value.trim();
+      if (!text || !socket || socket.readyState !== WebSocket.OPEN || !roomKey) return;
 
-    const ciphertext = await encryptText(roomKey, t);
+      const payload = JSON.stringify({
+        kind: "text",
+        body: text
+      });
+      const ciphertext = await encryptText(roomKey, payload);
+      socket.send(JSON.stringify({ type: "message", ciphertext }));
+      addBubble(text, true);
+      messageInput.value = "";
+    });
 
-    socket.send(JSON.stringify({ type: "message", ciphertext }));
-    addMsg(t, true);
-    messageInput.value = "";
-  });
-</script>
+    sendFileBtn.onclick = async () => {
+      const file = fileInput.files[0];
+      if (!file || !socket || socket.readyState !== WebSocket.OPEN || !roomKey) return;
 
+      if (file.size > 2 * 1024 * 1024) { // 2MB limite demo
+        addSystem("File troppo grosso (max 2MB nella demo).");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const bytes = new Uint8Array(reader.result);
+        const b64 = bytesToBase64(bytes);
+
+        const payload = JSON.stringify({
+          kind: "file",
+          name: file.name,
+          mime: file.type || "application/octet-stream",
+          size: file.size,
+          data: b64
+        });
+
+        const ciphertext = await encryptText(roomKey, payload);
+        socket.send(JSON.stringify({ type: "message", ciphertext }));
+
+        // Mostra subito il tuo file come own bubble
+        const metaDiv = document.createElement("div");
+        const nameSpan = document.createElement("div");
+        nameSpan.className = "file-meta";
+        nameSpan.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+        const link = document.createElement("span");
+        link.className = "file-link";
+        link.textContent = "File inviato";
+        metaDiv.appendChild(nameSpan);
+        metaDiv.appendChild(link);
+
+        if (file.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(file);
+          img.className = "preview";
+          metaDiv.appendChild(img);
+        }
+
+        addBubble(metaDiv, true);
+        fileInput.value = "";
+      };
+      reader.readAsArrayBuffer(file);
+    };
+  </script>
 </body>
 </html>
