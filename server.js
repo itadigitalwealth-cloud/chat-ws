@@ -6,7 +6,7 @@ const WebSocket = require("ws");
 
 const PORT = process.env.PORT || 8080;
 
-// rate limiting: max N messaggi per finestra
+// rate limiting: max N messaggi ogni WINDOW_MS per socket
 const WINDOW_MS = 5000;
 const MAX_MSG_PER_WINDOW = 20;
 const rateState = new Map(); // ws -> [timestamps]
@@ -21,10 +21,10 @@ function checkRate(ws) {
   return arr.length <= MAX_MSG_PER_WINDOW;
 }
 
-// roomId (SHA-256 hex) -> Set di socket
+// roomId (hash della password) -> Set di socket
 const rooms = new Map();
 
-// HTTP server che serve index.html
+// HTTP server: serve sempre index.html
 const server = http.createServer((req, res) => {
   const filePath = path.join(__dirname, "index.html");
   fs.readFile(filePath, (err, data) => {
@@ -37,6 +37,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
+// WebSocket appoggiato allo stesso server HTTP
 const wss = new WebSocket.Server({ server });
 
 function broadcast(roomId, data, excludeSocket) {
@@ -54,16 +55,16 @@ wss.on("connection", (ws, req) => {
   const ip = req.socket.remoteAddress;
   let roomId = null;
 
-  ws.on("message", message => {
+  ws.on("message", raw => {
     let data;
     try {
-      data = JSON.parse(message.toString());
+      data = JSON.parse(raw.toString());
     } catch {
       return;
     }
 
     if (data.type === "join") {
-      // join stanza: riceviamo SOLO l'hash (roomId), non la password
+      // Qui riceviamo SOLO l'hash della password (roomId), mai la password vera
       const rid = data.roomId;
       if (!rid || typeof rid !== "string") return;
 
@@ -101,7 +102,7 @@ wss.on("connection", (ws, req) => {
       const ciphertext = data.ciphertext;
       if (!ciphertext) return;
 
-      // inoltra il ciphertext a tutti gli altri della stanza
+      // Il server è completamente cieco: inoltra solo blob cifrati
       broadcast(roomId, { type: "message", ciphertext }, ws);
       return;
     }
@@ -111,7 +112,9 @@ wss.on("connection", (ws, req) => {
     if (roomId && rooms.has(roomId)) {
       const room = rooms.get(roomId);
       room.delete(ws);
-      if (room.size === 0) rooms.delete(roomId);
+      if (room.size === 0) {
+        rooms.delete(roomId);
+      }
     }
     rateState.delete(ws);
   });

@@ -8,44 +8,69 @@
     :root {
       color-scheme: dark;
     }
+    * {
+      box-sizing: border-box;
+    }
     body {
+      margin: 0;
+      min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #050509;
-      color: #f3f4f6;
+      background: radial-gradient(circle at top, #1f2933 0, #020617 55%, #000 100%);
+      color: #e5e7eb;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
       padding: 16px;
     }
     #app {
       width: 100%;
-      max-width: 600px;
+      max-width: 650px;
     }
-    #login, #chat {
-      background: #111827;
-      border-radius: 12px;
-      border: 1px solid #1f2937;
+    .card {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      border: 1px solid rgba(75, 85, 99, 0.7);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
       padding: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      backdrop-filter: blur(12px);
     }
-    #chat {
-      display: none;
-      margin-top: 12px;
+    #login {
+      margin-bottom: 16px;
+    }
+    #brand {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #brand span.logo {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.04em;
+    }
+    #brand span.badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.6);
+      color: #bfdbfe;
     }
     h3 {
-      margin-top: 0;
-      margin-bottom: 8px;
-      font-size: 18px;
+      margin: 4px 0 8px 0;
+      font-size: 17px;
     }
     label {
       font-size: 13px;
       color: #9ca3af;
+      display: block;
+      margin-top: 8px;
     }
     input, button {
       width: 100%;
       padding: 10px;
       margin-top: 6px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid #374151;
       background: #020617;
       color: #f9fafb;
@@ -54,66 +79,110 @@
     }
     input:focus {
       border-color: #6366f1;
+      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.5);
     }
     button {
-      background: #4f46e5;
-      border-color: #4f46e5;
+      background: linear-gradient(135deg, #4f46e5, #14b8a6);
+      border: none;
       font-weight: 600;
       cursor: pointer;
       margin-bottom: 4px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
     }
     button:hover {
-      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.8);
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
     }
     #loginStatus {
       font-size: 12px;
+      margin-top: 4px;
       min-height: 16px;
       color: #f97373;
+    }
+
+    #chat {
+      display: none;
       margin-top: 4px;
     }
+    #chatHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    #chatHeader h3 {
+      margin: 0;
+    }
+    #chatHeader span {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
     #messages {
       background: #020617;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid #111827;
-      height: 320px;
+      height: 360px;
       overflow-y: auto;
       padding: 8px;
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      scrollbar-color: #4b5563 #020617;
+      scrollbar-width: thin;
     }
+    #messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    #messages::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 999px;
+    }
+
     .row {
       display: flex;
+      width: 100%;
     }
     .own {
-      justify-content: flex-start;   /* TU a sinistra */
+      justify-content: flex-start;    /* TU a sinistra */
     }
     .other {
-      justify-content: flex-end;     /* ALTRI a destra */
+      justify-content: flex-end;      /* ALTRI a destra */
     }
     .bubble {
       max-width: 75%;
-      padding: 8px 10px;
-      border-radius: 12px;
+      padding: 8px 11px;
+      border-radius: 14px;
       word-wrap: break-word;
       font-size: 14px;
+      position: relative;
     }
     .b-own {
-      background: #4f46e5;
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
       color: #f9fafb;
       border-bottom-left-radius: 2px;
     }
     .b-other {
-      background: #1f2937;
+      background: #111827;
       color: #e5e7eb;
       border-bottom-right-radius: 2px;
+      border: 1px solid #1f2937;
     }
     .sys {
       text-align: center;
       font-size: 11px;
       color: #9ca3af;
       margin: 2px 0;
+    }
+
+    .file-meta {
+      font-size: 11px;
+      color: #9ca3af;
     }
     .file-link {
       color: #bfdbfe;
@@ -123,17 +192,15 @@
       display: inline-block;
       margin-top: 4px;
     }
-    .file-meta {
-      font-size: 11px;
-      color: #9ca3af;
-    }
     img.preview {
-      max-width: 200px;
-      max-height: 200px;
+      max-width: 220px;
+      max-height: 220px;
       display: block;
-      margin-top: 4px;
-      border-radius: 8px;
+      margin-top: 6px;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
     }
+
     #inputRow {
       display: flex;
       flex-direction: column;
@@ -155,30 +222,43 @@
     }
 
     @media (max-width: 480px) {
+      .card {
+        padding: 12px;
+      }
       #messages {
-        height: 260px;
+        height: 300px;
       }
       .bubble {
-        max-width: 85%;
+        max-width: 88%;
       }
       #inputRow2 {
         flex-direction: column;
+      }
+      #sendFileBtn {
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <div id="login">
-      <h3>Entra nella stanza cifrata</h3>
-      <label>Password stanza (condivisa)</label>
+    <div id="login" class="card">
+      <div id="brand">
+        <span class="logo">CipherRoom</span>
+        <span class="badge">E2EE • anonimo</span>
+      </div>
+      <h3>Entra nella stanza</h3>
+      <label>Password stanza (condivisa con chi vuoi)</label>
       <input id="password" type="password" placeholder="Password stanza" autocomplete="off" />
       <button id="connectBtn">Connetti</button>
       <div id="loginStatus"></div>
     </div>
 
-    <div id="chat">
-      <h3>Chat E2EE anonima</h3>
+    <div id="chat" class="card">
+      <div id="chatHeader">
+        <h3>Chat cifrata</h3>
+        <span>Testo, file e immagini cifrati lato client</span>
+      </div>
       <div id="messages"></div>
       <div id="inputRow">
         <input id="messageInput" placeholder="Scrivi e premi invio" autocomplete="off" />
@@ -196,7 +276,7 @@
 
     const enc = new TextEncoder();
     const dec = new TextDecoder();
-    const SALT = enc.encode("chat-e2ee-fixed-salt"); // per PBKDF2
+    const SALT = enc.encode("chat-e2ee-fixed-salt");
 
     const passwordInput = document.getElementById("password");
     const connectBtn = document.getElementById("connectBtn");
@@ -207,6 +287,8 @@
     const messageInput = document.getElementById("messageInput");
     const fileInput = document.getElementById("fileInput");
     const sendFileBtn = document.getElementById("sendFileBtn");
+
+    const fileBuffers = {}; // key file -> buffer chunks
 
     async function deriveKey(password) {
       const keyMaterial = await crypto.subtle.importKey(
@@ -262,33 +344,11 @@
       return dec.decode(plain);
     }
 
-    function addSystem(msg) {
-      const d = document.createElement("div");
-      d.className = "sys";
-      d.textContent = msg;
-      messagesDiv.appendChild(d);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    function addBubble(textOrNode, own) {
-      const row = document.createElement("div");
-      row.className = "row " + (own ? "own" : "other");
-      const bubble = document.createElement("div");
-      bubble.className = "bubble " + (own ? "b-own" : "b-other");
-
-      if (typeof textOrNode === "string") {
-        bubble.textContent = textOrNode;
-      } else {
-        bubble.appendChild(textOrNode);
-      }
-
-      row.appendChild(bubble);
-      messagesDiv.appendChild(row);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
     function bytesToBase64(bytes) {
-      const bin = String.fromCharCode(...bytes);
+      let bin = "";
+      for (let i = 0; i < bytes.length; i++) {
+        bin += String.fromCharCode(bytes[i]);
+      }
       return btoa(bin);
     }
 
@@ -299,6 +359,32 @@
         bytes[i] = bin.charCodeAt(i);
       }
       return bytes;
+    }
+
+    function addSystem(msg) {
+      const d = document.createElement("div");
+      d.className = "sys";
+      d.textContent = msg;
+      messagesDiv.appendChild(d);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function addBubble(content, own) {
+      const row = document.createElement("div");
+      row.className = "row " + (own ? "own" : "other");
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble " + (own ? "b-own" : "b-other");
+
+      if (typeof content === "string") {
+        bubble.textContent = content;
+      } else {
+        bubble.appendChild(content);
+      }
+
+      row.appendChild(bubble);
+      messagesDiv.appendChild(row);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
     connectBtn.onclick = async () => {
@@ -319,7 +405,8 @@
       const roomId = await getRoomId(password);
       loginStatus.textContent = "Connessione...";
 
-      socket = new WebSocket(`wss://${location.host}`);
+      const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(`${wsProtocol}://${location.host}`);
 
       socket.onopen = () => {
         socket.send(JSON.stringify({
@@ -334,7 +421,7 @@
         if (data.type === "welcome") {
           loginDiv.style.display = "none";
           chatDiv.style.display = "block";
-          addSystem("Connesso. Messaggi, file e immagini sono cifrati lato client.");
+          addSystem("Connesso. Tutto cifrato lato client.");
           return;
         }
 
@@ -350,41 +437,68 @@
             try {
               obj = JSON.parse(plain);
             } catch {
-              // vecchio messaggio solo testo
+              // vecchio formato solo testo
               addBubble(plain, false);
               return;
             }
 
             if (obj.kind === "text") {
               addBubble(obj.body, false);
-            } else if (obj.kind === "file") {
-              const metaDiv = document.createElement("div");
-              const nameSpan = document.createElement("div");
-              nameSpan.className = "file-meta";
-              nameSpan.textContent = `${obj.name} (${Math.round(obj.size / 1024)} KB)`;
-              const link = document.createElement("a");
-              link.className = "file-link";
-              link.textContent = "Scarica";
-              const bytes = base64ToBytes(obj.data);
-              const blob = new Blob([bytes], { type: obj.mime || "application/octet-stream" });
-              const url = URL.createObjectURL(blob);
-              link.href = url;
-              link.download = obj.name || "file";
+              return;
+            }
 
-              metaDiv.appendChild(nameSpan);
-              metaDiv.appendChild(link);
-
-              if (obj.mime && obj.mime.startsWith("image/")) {
-                const img = document.createElement("img");
-                img.src = url;
-                img.className = "preview";
-                metaDiv.appendChild(img);
+            if (obj.kind === "file-chunk") {
+              const key = `${obj.name}|${obj.size}|${obj.mime}`;
+              if (!fileBuffers[key]) {
+                fileBuffers[key] = {
+                  mime: obj.mime,
+                  size: obj.size,
+                  totalChunks: obj.totalChunks,
+                  chunks: new Array(obj.totalChunks),
+                  received: 0
+                };
+              }
+              const fb = fileBuffers[key];
+              if (!fb.chunks[obj.chunkIndex]) {
+                fb.chunks[obj.chunkIndex] = obj.data;
+                fb.received++;
               }
 
-              addBubble(metaDiv, false);
-            } else {
-              addBubble(plain, false);
+              if (fb.received === fb.totalChunks) {
+                const parts = [];
+                for (let i = 0; i < fb.totalChunks; i++) {
+                  parts.push(base64ToBytes(fb.chunks[i]));
+                }
+                const blob = new Blob(parts, { type: fb.mime || "application/octet-stream" });
+                const url = URL.createObjectURL(blob);
+
+                const metaDiv = document.createElement("div");
+                const nameSpan = document.createElement("div");
+                nameSpan.className = "file-meta";
+                nameSpan.textContent = `${obj.name} (${Math.round(obj.size / 1024)} KB)`;
+                const link = document.createElement("a");
+                link.className = "file-link";
+                link.href = url;
+                link.textContent = "Scarica";
+                link.download = obj.name || "file";
+                metaDiv.appendChild(nameSpan);
+                metaDiv.appendChild(link);
+
+                if (fb.mime && fb.mime.startsWith("image/")) {
+                  const img = document.createElement("img");
+                  img.src = url;
+                  img.className = "preview";
+                  metaDiv.appendChild(img);
+                }
+
+                addBubble(metaDiv, false);
+                delete fileBuffers[key];
+              }
+              return;
             }
+
+            // fallback
+            addBubble(plain, false);
           } catch {
             addSystem("[Messaggio non decifrabile (password diversa?)]");
           }
@@ -400,7 +514,7 @@
       };
     };
 
-    messageInput.addEventListener("keydown", async (e) => {
+    messageInput.addEventListener("keydown", async e => {
       if (e.key !== "Enter") return;
       const text = messageInput.value.trim();
       if (!text || !socket || socket.readyState !== WebSocket.OPEN || !roomKey) return;
@@ -419,47 +533,60 @@
       const file = fileInput.files[0];
       if (!file || !socket || socket.readyState !== WebSocket.OPEN || !roomKey) return;
 
-      if (file.size > 2 * 1024 * 1024) { // 2MB limite demo
-        addSystem("File troppo grosso (max 2MB nella demo).");
+      if (file.size > 8 * 1024 * 1024) {
+        addSystem("File troppo grosso (max 8MB).");
         return;
       }
 
       const reader = new FileReader();
       reader.onload = async () => {
-        const bytes = new Uint8Array(reader.result);
-        const b64 = bytesToBase64(bytes);
+        try {
+          const bytes = new Uint8Array(reader.result);
+          const chunkSize = 50 * 1024;
+          const totalChunks = Math.ceil(bytes.length / chunkSize);
 
-        const payload = JSON.stringify({
-          kind: "file",
-          name: file.name,
-          mime: file.type || "application/octet-stream",
-          size: file.size,
-          data: b64
-        });
+          for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, bytes.length);
+            const chunk = bytes.slice(start, end);
+            const b64 = bytesToBase64(chunk);
 
-        const ciphertext = await encryptText(roomKey, payload);
-        socket.send(JSON.stringify({ type: "message", ciphertext }));
+            const payload = JSON.stringify({
+              kind: "file-chunk",
+              name: file.name,
+              mime: file.type || "application/octet-stream",
+              size: file.size,
+              totalChunks,
+              chunkIndex: i,
+              data: b64
+            });
 
-        // Mostra subito il tuo file come own bubble
-        const metaDiv = document.createElement("div");
-        const nameSpan = document.createElement("div");
-        nameSpan.className = "file-meta";
-        nameSpan.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
-        const link = document.createElement("span");
-        link.className = "file-link";
-        link.textContent = "File inviato";
-        metaDiv.appendChild(nameSpan);
-        metaDiv.appendChild(link);
+            const ciphertext = await encryptText(roomKey, payload);
+            socket.send(JSON.stringify({ type: "message", ciphertext }));
+          }
 
-        if (file.type.startsWith("image/")) {
-          const img = document.createElement("img");
-          img.src = URL.createObjectURL(file);
-          img.className = "preview";
-          metaDiv.appendChild(img);
+          const metaDiv = document.createElement("div");
+          const nameSpan = document.createElement("div");
+          nameSpan.className = "file-meta";
+          nameSpan.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+          const label = document.createElement("span");
+          label.className = "file-link";
+          label.textContent = "File inviato";
+          metaDiv.appendChild(nameSpan);
+          metaDiv.appendChild(label);
+
+          if (file.type.startsWith("image/")) {
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file);
+            img.className = "preview";
+            metaDiv.appendChild(img);
+          }
+
+          addBubble(metaDiv, true);
+          fileInput.value = "";
+        } catch {
+          addSystem("Errore durante l'invio del file.");
         }
-
-        addBubble(metaDiv, true);
-        fileInput.value = "";
       };
       reader.readAsArrayBuffer(file);
     };
