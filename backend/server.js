@@ -5,7 +5,7 @@ const fs = require("fs");
 const bcrypt = require("bcryptjs");
 const { v4: uuid } = require("uuid");
 const WebSocket = require("ws");
-const path = require("path");
+
 
 const PORT = process.env.PORT || 8080;
 
