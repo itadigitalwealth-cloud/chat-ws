@@ -20,7 +20,7 @@ let trustedKeys = {};          // chiavi pubbliche "accettate"
 /* ==========================
    API BASE URL
    ========================== */
-const API = "http://localhost:8080";    // Cambia quando deployi su Render
+const API = window.location.origin;;    // Cambia quando deployi su Render
 
 
 /* ============================================================
