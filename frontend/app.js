@@ -1,51 +1,47 @@
 /* ============================================================
-   PEGASUSCHAT FRONTEND LOGIC
-   - Login / Register
-   - WebSocket
-   - Search Users
-   - Open Chat
-   - E2EE (ECDH + AES-GCM) con accettazione stile Signal
+   PEGASUSCHAT - FRONTEND (STILE TELEGRAM, E2EE FIXATA)
    ============================================================ */
 
 /* ==========================
-   VARIABILI GLOBALI
+   CONFIG
    ========================== */
+
+// Backend e frontend stanno sullo stesso dominio (Render)
+const API = window.location.origin;
+// WebSocket sullo stesso host
+const WS_URL = API.replace(/^http/, "ws");
+
+/* ==========================
+   STATE
+   ========================== */
+
 let me = null;                 // @username loggato
 let ws = null;                 // websocket
-let currentChat = null;        // @destinatario aperto
-let sessionKeys = {};          // per ogni utente: AES key derivata
-let myKeyPair = null;          // chiavi ECDH del client
-let trustedKeys = {};          // chiavi pubbliche "accettate"
+let currentChat = null;        // @contatto aperto
+
+let myKeyPair = null;          // chiavi ECDH locali (per questo utente)
+const sessionKeys = {};        // { "@other": CryptoKey AES-GCM }
 
 /* ==========================
-   API BASE URL
+   UTILS HTTP
    ========================== */
-const API = window.location.origin;   // Cambia quando deployi su Render
 
-
-/* ============================================================
-   FUNZIONI UTILI
-   ============================================================ */
-
-// Wrapper per POST
 async function post(url, data) {
-  const r = await fetch(API + url, {
+  const res = await fetch(API + url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
-  return r.json();
+  return res.json();
 }
 
-// Wrapper per GET
 async function get(url) {
-  const r = await fetch(API + url);
-  return r.json();
+  const res = await fetch(API + url);
+  return res.json();
 }
-
 
 /* ============================================================
-   E2EE — FUNZIONI CRITTOGRAFICHE
+   CRITTOGRAFIA E2EE
    ============================================================ */
 
 // genera coppia di chiavi ECDH
@@ -60,14 +56,14 @@ async function generateECDH() {
   );
 }
 
-// esporta chiave pubblica in base64
-async function exportKey(key) {
-  const raw = await crypto.subtle.exportKey("raw", key);
+// esporta pubblica in base64
+async function exportPublicKeyBase64(pubKey) {
+  const raw = await crypto.subtle.exportKey("raw", pubKey);
   return btoa(String.fromCharCode(...new Uint8Array(raw)));
 }
 
-// importa key pubblica da base64
-async function importPublicKey(b64) {
+// importa chiave pubblica da base64
+async function importPublicKeyBase64(b64) {
   const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
   return crypto.subtle.importKey(
     "raw",
@@ -78,8 +74,41 @@ async function importPublicKey(b64) {
   );
 }
 
-// deriva AES da ECDH
-async function deriveAES(myPrivate, theirPublicKey) {
+// salva chiavi in localStorage (per username)
+async function saveKeyPairForUser(username, keyPair) {
+  const pubJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+  const privJwk = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+  const payload = { pubJwk, privJwk };
+  localStorage.setItem("pegasus_keypair_" + username, JSON.stringify(payload));
+}
+
+// carica chiavi da localStorage, senza generarne di nuove
+async function loadKeyPairForUser(username) {
+  const raw = localStorage.getItem("pegasus_keypair_" + username);
+  if (!raw) throw new Error("chiave locale non trovata per " + username);
+  const parsed = JSON.parse(raw);
+
+  const publicKey = await crypto.subtle.importKey(
+    "jwk",
+    parsed.pubJwk,
+    { name: "ECDH", namedCurve: "P-256" },
+    true,
+    []
+  );
+
+  const privateKey = await crypto.subtle.importKey(
+    "jwk",
+    parsed.privJwk,
+    { name: "ECDH", namedCurve: "P-256" },
+    false,
+    ["deriveKey"]
+  );
+
+  return { publicKey, privateKey };
+}
+
+// deriva AES-GCM da ECDH
+async function deriveSessionKey(myPrivate, theirPublicKey) {
   return crypto.subtle.deriveKey(
     {
       name: "ECDH",
@@ -93,14 +122,14 @@ async function deriveAES(myPrivate, theirPublicKey) {
 }
 
 // cifra testo
-async function encrypt(key, text) {
+async function encryptText(key, text) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encoded = new TextEncoder().encode(text);
+  const data = new TextEncoder().encode(text);
 
   const ciphertext = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
-    encoded
+    data
   );
 
   return {
@@ -110,7 +139,7 @@ async function encrypt(key, text) {
 }
 
 // decifra testo
-async function decrypt(key, ivB64, ctB64) {
+async function decryptText(key, ivB64, ctB64) {
   const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
   const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
 
@@ -123,9 +152,8 @@ async function decrypt(key, ivB64, ctB64) {
   return new TextDecoder().decode(decrypted);
 }
 
-
 /* ============================================================
-   LOGIN / REGISTER
+   AUTH
    ============================================================ */
 
 async function registerUser() {
@@ -137,14 +165,25 @@ async function registerUser() {
     status.textContent = "Lo username deve iniziare con @";
     return;
   }
+  if (password.length < 4) {
+    status.textContent = "Password troppo corta";
+    return;
+  }
 
-  myKeyPair = await generateECDH();
-  const publicKey = await exportKey(myKeyPair.publicKey);
+  // genera coppia di chiavi una volta per sempre per questo utente
+  const keyPair = await generateECDH();
+  myKeyPair = keyPair;
+
+  // salva localmente
+  await saveKeyPairForUser(username, keyPair);
+
+  // manda solo la PUBLIC al server
+  const publicKeyB64 = await exportPublicKeyBase64(keyPair.publicKey);
 
   const r = await post("/api/register", {
     username,
     password,
-    publicKey
+    publicKey: publicKeyB64
   });
 
   if (r.error) {
@@ -152,8 +191,8 @@ async function registerUser() {
     return;
   }
 
-  status.style.color = "#4a7dff";
-  status.textContent = "Registrato! Ora fai login.";
+  status.style.color = "#4ade80";
+  status.textContent = "Registrato. Ora fai login.";
 }
 
 async function loginUser() {
@@ -161,67 +200,63 @@ async function loginUser() {
   const password = document.getElementById("regPassword").value.trim();
   const status = document.getElementById("loginStatus");
 
+  status.textContent = "";
+
   const r = await post("/api/login", {
     username,
     password
   });
 
   if (!r.ok) {
-    status.textContent = r.error;
+    status.textContent = r.error || "Credenziali errate";
     return;
   }
 
-  me = username;
+  me = r.username;
   document.getElementById("meUsername").textContent = me;
 
-  await loadMyKey(); // recupera la chiave privata se c'è │ generala se no
-  connectWS();
+  try {
+    // carica la chiave usata in fase di registrazione
+    myKeyPair = await loadKeyPairForUser(me);
+  } catch (e) {
+    status.textContent = "Chiave locale non trovata. Registrati di nuovo con un nuovo account.";
+    return;
+  }
 
+  connectWS();
   document.getElementById("loginView").style.display = "none";
   document.getElementById("chatView").style.display = "flex";
 
-  loadConversations();
+  await loadConversations();
 }
-
-/* ============================================================
-   RECUPERO / GENERAZIONE CHIAVI LOCALI
-   ============================================================ */
-async function loadMyKey() {
-  // Per ora, generiamo chiave ogni volta (in futuro: salvare su localStorage)
-  myKeyPair = await generateECDH();
-}
-
 
 /* ============================================================
    WEBSOCKET
    ============================================================ */
 
 function connectWS() {
-  const proto = API.startsWith("https") ? "wss://" : "ws://";
-  ws = new WebSocket(proto + API.replace(/^https?:\/\//, ""));
+  ws = new WebSocket(WS_URL);
 
   ws.onopen = () => {
     ws.send(JSON.stringify({ type: "auth", username: me }));
   };
 
-  ws.onmessage = async (ev) => {
-    const data = JSON.parse(ev.data);
+  ws.onmessage = async (event) => {
+    const data = JSON.parse(event.data);
 
     if (data.type === "message") {
-      const m = data.msg;
-      if (m.from === currentChat || m.to === currentChat) {
-        await displayIncoming(m);
-      }
+      const msg = data.msg;
+      await handleIncomingWSMessage(msg);
     }
   };
 }
 
-
 /* ============================================================
-   CERCA UTENTI
+   UTENTI / RICERCA / CHAT LIST
    ============================================================ */
+
 async function searchUsers() {
-  const q = document.getElementById("searchInput").value;
+  const q = document.getElementById("searchInput").value.trim();
   const results = await get("/api/users?search=" + encodeURIComponent(q));
 
   const box = document.getElementById("searchResults");
@@ -236,12 +271,8 @@ async function searchUsers() {
   });
 }
 
-
-/* ============================================================
-   LISTA CHAT RECENTI
-   ============================================================ */
 async function loadConversations() {
-  const list = await get(`/api/conversations?me=${me}`);
+  const list = await get("/api/conversations?me=" + encodeURIComponent(me));
 
   const box = document.getElementById("chatList");
   box.innerHTML = "";
@@ -254,58 +285,60 @@ async function loadConversations() {
   });
 }
 
-
 /* ============================================================
-   APRI CHAT
+   GESTIONE CHATS
    ============================================================ */
+
+// prepara sessionKey con un utente specifico (EC(DH))
+async function ensureSessionKeyFor(otherUsername) {
+  if (sessionKeys[otherUsername]) return sessionKeys[otherUsername];
+
+  // prendi la chiave pubblica dell'altro dal server
+  const other = await get("/api/user/" + encodeURIComponent(otherUsername));
+  const theirPub = await importPublicKeyBase64(other.publicKey);
+
+  const aesKey = await deriveSessionKey(myKeyPair.privateKey, theirPub);
+  sessionKeys[otherUsername] = aesKey;
+  return aesKey;
+}
+
 async function openChat(username) {
   currentChat = username;
 
-  // mostra header
+  // aggiorna header
   document.getElementById("chatHeader").textContent = username;
 
-  // recupera chiave pubblica dell'altro
-  const other = await get(`/api/user/${username}`);
+  // prepara session key
+  await ensureSessionKeyFor(username);
 
-  if (!trustedKeys[username]) {
-    const ok = confirm(
-      `Vuoi accettare la chiave pubblica di ${username}?\n` +
-      `Una volta accettata, avrete la vostra chiave E2EE.`
-    );
-    if (!ok) return;
-
-    trustedKeys[username] = other.publicKey;
-  }
-
-  // deriviamo la session key
-  const theirPub = await importPublicKey(trustedKeys[username]);
-  sessionKeys[username] = await deriveAES(myKeyPair.privateKey, theirPub);
-
-  // carica storico cifrato
-  const history = await get(`/api/messages?me=${me}&with=${username}`);
+  // carica storico
+  const history = await get(`/api/messages?me=${encodeURIComponent(me)}&with=${encodeURIComponent(username)}`);
 
   const box = document.getElementById("messagesBox");
   box.innerHTML = "";
 
   for (const msg of history) {
-    await displayIncoming(msg);
+    await displayDecryptedMessage(msg);
   }
 }
-
 
 /* ============================================================
    INVIO MESSAGGI
    ============================================================ */
+
 async function sendMessage() {
   if (!currentChat) return;
 
-  const text = document.getElementById("messageInput").value;
+  const input = document.getElementById("messageInput");
+  const text = input.value.trim();
   if (!text) return;
 
-  const key = sessionKeys[currentChat];
-  const { iv, ciphertext } = await encrypt(key, text);
+  // assicura che la sessionKey esista
+  const key = await ensureSessionKeyFor(currentChat);
 
-  // POST al backend
+  const { iv, ciphertext } = await encryptText(key, text);
+
+  // manda al server
   await post("/api/messages", {
     from: me,
     to: currentChat,
@@ -314,38 +347,63 @@ async function sendMessage() {
     ts: Date.now()
   });
 
-  displayBubble("me", text);
-  document.getElementById("messageInput").value = "";
+  // mostra subito il tuo messaggio nella chat
+  addBubble("me", text);
+  input.value = "";
 }
-
 
 /* ============================================================
    RICEZIONE MESSAGGI
    ============================================================ */
 
-async function displayIncoming(msg) {
-  const key = sessionKeys[msg.from] || sessionKeys[msg.to];
-  if (!key) return;
+// gestione messaggi arrivati via WS
+async function handleIncomingWSMessage(msg) {
+  // chi è l'altro nella conversazione?
+  const other = msg.from === me ? msg.to : msg.from;
 
-  const text = await decrypt(key, msg.iv, msg.ciphertext);
+  // prepara session key per quell'utente, se non esiste
+  await ensureSessionKeyFor(other);
 
-  if (msg.from === me) {
-    displayBubble("me", text);
+  // se la chat aperta è quella giusta, mostra messaggio
+  if (currentChat === other) {
+    await displayDecryptedMessage(msg);
   } else {
-    displayBubble("them", text);
+    // in futuro: potresti highlightare la chat nella sidebar
+    await displayDecryptedMessage(msg); // opzionale: comunque appendi
+  }
+
+  // aggiorna lista conversazioni (se nuovo contatto)
+  loadConversations();
+}
+
+// decifra e mostra un messaggio da DB/WS
+async function displayDecryptedMessage(msg) {
+  try {
+    const other = msg.from === me ? msg.to : msg.from;
+    const key = sessionKeys[other] || sessionKeys[msg.from] || sessionKeys[msg.to];
+    if (!key) return;
+
+    const text = await decryptText(key, msg.iv, msg.ciphertext);
+
+    if (msg.from === me) {
+      addBubble("me", text);
+    } else {
+      addBubble("them", text);
+    }
+  } catch (e) {
+    console.error("Errore decrittando messaggio:", e);
   }
 }
 
-
 /* ============================================================
-   BOLLE GRAFICHE
+   UI BOLLE MESSAGGI
    ============================================================ */
 
-function displayBubble(type, text) {
+function addBubble(type, text) {
   const box = document.getElementById("messagesBox");
 
   const div = document.createElement("div");
-  div.className = `message ${type}`;
+  div.className = "message " + type;
   div.textContent = text;
 
   box.appendChild(div);
