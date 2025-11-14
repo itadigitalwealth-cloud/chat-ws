@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>PegasusChat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- BACKGROUND EFFETTI -->
+  <div class="bg-layer bg-gradient-1"></div>
+  <div class="bg-layer bg-gradient-2"></div>
+  <div class="bg-noise"></div>
+
+  <div id="appRoot">
+
+    <!-- VIEW LOGIN / REGISTER -->
+    <div id="loginView" class="view view-login">
+      <div class="login-wrapper">
+        <div class="brand-title">
+          <span class="logo-dot"></span>
+          <span>PegasusChat</span>
+        </div>
+        <p class="brand-subtitle">Chat anonima cifrata end-to-end, stile dark net ma fatta bene.</p>
+
+        <div class="login-card glass">
+          <h1>Accedi</h1>
+          <p class="login-hint">@username &amp; pass, niente email, niente numeri.</p>
+
+          <div class="input-group">
+            <label for="regUsername">Username</label>
+            <input id="regUsername" placeholder="@username" autocomplete="off">
+          </div>
+
+          <div class="input-group">
+            <label for="regPassword">Password</label>
+            <input id="regPassword" type="password" placeholder="password" autocomplete="off">
+          </div>
+
+          <div class="login-actions">
+            <button class="btn primary" onclick="loginUser()">Login</button>
+            <button class="btn ghost" onclick="registerUser()">Registrati</button>
+          </div>
+
+          <div id="loginStatus" class="status"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW CHAT -->
+    <div id="chatView" class="view view-chat" style="display:none;">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar glass">
+
+        <div class="sidebar-header">
+          <div class="me-block">
+            <div class="me-avatar">
+              <span class="me-avatar-initial">P</span>
+            </div>
+            <div class="me-info">
+              <div id="meUsername" class="me-username">@me</div>
+              <div class="me-status">Online • E2EE attiva</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-search">
+          <div class="search-input-wrap">
+            <input id="searchInput" placeholder="Cerca utenti @..." autocomplete="off">
+            <button class="icon-btn" onclick="searchUsers()">🔍</button>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-title">Chat recenti</div>
+          <div id="chatList" class="chat-list"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-title">Risultati ricerca</div>
+          <div id="searchResults" class="chat-list"></div>
+        </div>
+
+      </aside>
+
+      <!-- AREA CHAT PRINCIPALE -->
+      <main class="chat-area">
+
+        <!-- HEADER CHAT -->
+        <header class="chat-header glass">
+          <div class="chat-target">
+            <div class="target-avatar">
+              <span class="target-initial">?</span>
+            </div>
+            <div class="target-info">
+              <div id="chatHeader" class="target-username">Seleziona una chat</div>
+              <div class="target-status">Chiavi non negoziate</div>
+            </div>
+          </div>
+        </header>
+
+        <!-- LISTA MESSAGGI -->
+        <section id="messagesBox" class="messages"></section>
+
+        <!-- INPUT MESSAGGIO -->
+        <footer class="message-box glass">
+          <input id="messageInput" placeholder="Scrivi un messaggio cifrato..." autocomplete="off">
+          <button class="btn send-btn" onclick="sendMessage()">➤</button>
+        </footer>
+
+      </main>
+
+    </div> <!-- /view chat -->
+
+  </div> <!-- /appRoot -->
+
+  <script src="./app.js"></script>
+</body>
+</html>
