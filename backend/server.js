@@ -5,6 +5,7 @@ const fs = require("fs");
 const bcrypt = require("bcryptjs");
 const { v4: uuid } = require("uuid");
 const WebSocket = require("ws");
+const path = require("path");
 
 const PORT = process.env.PORT || 8080;
 
@@ -242,6 +243,15 @@ wss.on("connection", ws => {
     }
   });
 });
+
+// serve frontend statico
+app.use(express.static(path.join(__dirname, "../frontend")));
+
+// fallback per SPA (index.html)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
+
 
 server.listen(PORT, () => {
   console.log("PegasusChat backend in ascolto sulla porta " + PORT);

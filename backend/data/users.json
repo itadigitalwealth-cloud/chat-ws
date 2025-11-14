@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": "9420fef1-be54-48cf-ae22-fe2ebfc09dca",
+    "username": "@dss",
+    "passwordHash": "$2a$11$gd0yRwoVX6mtiw6.pZ7hq.ox6gepSh.wgoFhDfzAlIIuRYfH9Oq6W",
+    "publicKey": "BNN0OKWB9u5fnpSc9Tj1CdW1Hcv5drKg2rbE6YvYNXtFtcj5doz+g8H6o+X0sv0euK8CRZMDLkVpL2S+OaxYZbU=",
+    "createdAt": 1763113511747
+  }
+]
